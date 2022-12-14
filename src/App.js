@@ -8,19 +8,19 @@ const TYPE ={
   child:"CHILD"
 }
 
-const ChildrenDiv = ({nodeData, toggle, addChild, inputData})=>{
-  return nodeData.map(item=><Parent key={item.name} nodeData={item} toggle={toggle} addChild={addChild} inputData={inputData}/>)
+const ChildrenDiv = ({nodeData, toggle, addChild, inputData, display})=>{
+  return nodeData.map(item=><Parent key={item.name} nodeData={item} toggle={toggle} addChild={addChild} inputData={inputData} display={display}/>)
 }
 
-const Parent =({nodeData, toggle, addChild, inputData})=>{
+const Parent =({nodeData, toggle, addChild, inputData, display})=>{
   return(
       <div className='parent-div' key={nodeData.name}>
-        <div>
-          <button className='toggle' onClick={(e)=>toggle(nodeData.name)}>></button>
+        <div className='header-div'>
+          <button className="toggle" onClick={(e)=>toggle(nodeData.name)}><div className={display[nodeData.name]?"":"rotate-90"}>></div></button>
           <span className='parent-name'>{nodeData.name}</span>
           <button className='add-child' onClick={(e)=>addChild(nodeData.name)}>Add Child</button>
         </div>
-        <div className='{nodeData.name} child-div'>{nodeData.children && nodeData.children.length?<ChildrenDiv nodeData={nodeData.children} toggle={toggle} addChild={addChild} inputData={inputData}/>:<input type="text" onChange={(event)=>inputData(nodeData.name,event.target.value)}/>}</div>
+        <div className={display[nodeData.name]?"hide":""}>{nodeData.children && nodeData.children.length?<ChildrenDiv nodeData={nodeData.children} toggle={toggle} addChild={addChild} inputData={inputData} display={display}/>:<div className='data-input'>Data <input type="text" onChange={(event)=>inputData(nodeData.name,event.target.value)}/></div>}</div>
       </div>
   )
 }
@@ -30,8 +30,20 @@ function App() {
     name:"root"
   })
 
+  const [display, setDisplay] = useState({});
+
   const onToggle=(nodeName)=>{
-    console.log(nodeName)
+    if(display[nodeName]){
+      setDisplay({
+        ...display,
+        [nodeName]:false
+      });
+    }else{
+      setDisplay({
+        ...display,
+        [nodeName]:true
+      });
+    }
   }
 
 
@@ -40,6 +52,7 @@ function App() {
       arr.forEach(i => {
           if(_.isEqual(i.name, nodeName)) {
               if(type === TYPE.child){
+                delete i.data;
                 if(i.children){
                   i.children =[...i.children,{
                       name:nodeName+"-child-"+(i.children.length+1),
@@ -61,6 +74,7 @@ function App() {
 
   const onAddChild=(nodeName)=>{
     if(nodeName === "root"){
+      delete nodeData.data;
       if(nodeData.children){
         setNodeData({
           ...nodeData,
@@ -98,10 +112,13 @@ function App() {
   useEffect(()=>{
     setNodeData(nodeData);
   },[nodeData]);
+
+  const [print, setPrint] = useState(false);
   return (
-    <div className="App">
-      <h1>I am inside app, {nodeData.name}</h1>
-      <Parent nodeData={nodeData} toggle={onToggle} addChild={onAddChild} inputData={onInputData}/>
+    <div className='backgorund'>
+        <Parent nodeData={nodeData} toggle={onToggle} addChild={onAddChild} inputData={onInputData} display={display}/>
+        <button className="export" onClick={(e)=>setPrint(!print)}>Export</button>
+        <div className={print?"print-data":"print-data hide"}>{JSON.stringify(nodeData)}</div>
     </div>
   );
 }
